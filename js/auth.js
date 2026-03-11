@@ -36,7 +36,7 @@ if (form) {
         } catch(err) {
             errorEl.textContent = err.message || 'Login failed, please recheck your credentials.';
             loginBtn.disabled = false;
-            loginBtn.textContent = 'Enter Kingdom';
+            loginBtn.textContent = 'Try Again';
         }
     });
 }

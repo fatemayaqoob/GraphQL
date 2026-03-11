@@ -438,9 +438,28 @@ function generateSuccessPieChart(projects) {
     
     svg.innerHTML = '';
     
-    const passed = projects.filter(p => p.grade > 0).length;
-    const failed = projects.filter(p => p.grade === 0).length;
+    console.log('=== PIE CHART DEBUG ===');
+    console.log('Total entries received:', projects.length);
+    
+    // DEDUPLICATION: Keep only the latest attempt for each unique project
+    const uniqueProjects = [];
+    const seen = new Set();
+    
+    projects.forEach(project => {
+        if (!seen.has(project.path)) {
+            seen.add(project.path);
+            uniqueProjects.push(project);
+        }
+    });
+    
+    console.log('After deduplication:', uniqueProjects.length, 'unique projects');
+    
+    const passed = uniqueProjects.filter(p => p.grade > 0).length;
+    const failed = uniqueProjects.filter(p => p.grade === 0).length;
     const total = passed + failed;
+    
+    console.log('Pie chart - Passed:', passed, 'Failed:', failed, 'Total graded:', total);
+    console.log('=======================');
     
     if (total === 0) {
         const text = createSVGElement('text', {

@@ -131,10 +131,37 @@ function displayAuditRatio(ratio) {
 }
 
 function displayProjectStats(projects) {
-    const passed = projects.filter(p => p.grade > 0).length;
-    const failed = projects.filter(p => p.grade === 0).length;
-    const total = passed + failed; // Only count graded projects (synchronize with pie chart)
+    console.log('=== PROJECT STATS DEBUG ===');
+    console.log('Total entries from API:', projects.length);
+    console.log('All projects:', projects.map(p => ({ path: p.path, grade: p.grade, name: p.object?.name })));
+    
+    //ensure no duplicates
+    const uniqueProjects = [];
+    const seen = new Set();
+    
+    projects.forEach(project => {
+        if (!seen.has(project.path)) {
+            seen.add(project.path);
+            uniqueProjects.push(project);
+        }
+    });
+    
+    console.log('After deduplication: %d unique projects', uniqueProjects.length);
+    console.log('Unique projects:', uniqueProjects.map(p => ({ path: p.path, grade: p.grade, name: p.object?.name })));
+    
+    const passed = uniqueProjects.filter(p => p.grade > 0).length;
+    const failed = uniqueProjects.filter(p => p.grade === 0).length;
+    const inProgress = uniqueProjects.filter(p => p.grade == null).length;
+    
+    const total = passed + failed;
     const successRate = total > 0 ? ((passed / total) * 100).toFixed(1) : 0;
+    
+    console.log('Passed (grade > 0):', passed);
+    console.log('Failed (grade === 0):', failed);
+    console.log('In Progress (grade === null):', inProgress);
+    console.log('Total graded:', total);
+    console.log('Success rate:', successRate + '%');
+    console.log('=========================');
 
     if (completedProjectsEl) completedProjectsEl.textContent = passed;
     if (failedProjectsEl) failedProjectsEl.textContent = failed;
