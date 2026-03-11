@@ -428,7 +428,6 @@ function generateXPLineChart(transactions) {
         'font-size': '14',
         'font-weight': '600'
     });
-    yLabel.textContent = 'Total XP';
     svg.appendChild(yLabel);
 }
 

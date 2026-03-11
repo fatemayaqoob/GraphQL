@@ -1,8 +1,37 @@
-const token = localStorage.getItem('jwt');
-
-if (!token) {
-    window.location.href = 'index.html';
+// Enhanced authentication check with back-button protection
+function checkAuthAndRedirect() {
+    const token = localStorage.getItem('jwt');
+    
+    if (!token || !isAuthenticated()) {
+        // Clear any stale data
+        localStorage.removeItem('jwt');
+        window.location.replace('index.html');
+        return false;
+    }
+    return true;
 }
+
+// Initial auth check
+if (!checkAuthAndRedirect()) {
+    // Stop execution if not authenticated
+    throw new Error('Not authenticated');
+}
+
+// Detect back-button navigation (pageshow fires when page is loaded from cache)
+window.addEventListener('pageshow', function(event) {
+    // If page is loaded from cache (back/forward button)
+    if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+        console.log('Page loaded from cache, re-checking authentication...');
+        checkAuthAndRedirect();
+    }
+});
+
+// Re-check auth when page becomes visible (handles tab switching)
+document.addEventListener('visibilitychange', function() {
+    if (!document.hidden) {
+        checkAuthAndRedirect();
+    }
+});
 
 // DOM elements
 const logoutBtn = document.getElementById('logoutBtn');
@@ -104,7 +133,7 @@ function displayAuditRatio(ratio) {
 function displayProjectStats(projects) {
     const passed = projects.filter(p => p.grade > 0).length;
     const failed = projects.filter(p => p.grade === 0).length;
-    const total = projects.length;
+    const total = passed + failed; // Only count graded projects (synchronize with pie chart)
     const successRate = total > 0 ? ((passed / total) * 100).toFixed(1) : 0;
 
     if (completedProjectsEl) completedProjectsEl.textContent = passed;

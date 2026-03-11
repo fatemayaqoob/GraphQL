@@ -109,8 +109,16 @@ function getToken(){
 }
 
 function logout() {
+    // Clear all authentication data
     localStorage.removeItem('jwt');
-    window.location.href = 'index.html';
+    
+    // Use replace instead of href to prevent back-button access
+    window.location.replace('index.html');
+    
+    // Additional cleanup - clear any cached data
+    if (window.performance && window.performance.navigation.type === window.performance.navigation.TYPE_BACK_FORWARD) {
+        window.location.reload(true);
+    }
 }
 
 function decodeJWT(token) {
