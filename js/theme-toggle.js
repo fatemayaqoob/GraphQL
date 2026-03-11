@@ -164,5 +164,4 @@
         createAtmosphericParticles();
     }
 
-    console.log('Ethereal theme system initialized ✨');
 })();
