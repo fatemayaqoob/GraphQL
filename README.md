@@ -35,7 +35,7 @@ A personal profile dashboard that fetches and displays user data from a GraphQL 
 ## Setup
 
 1. Clone this repository
-2. Open `login.html` in a web browser
+2. Open `index.html` in a web browser
 3. Login with your credentials
 4. View your profile and statistics
 
@@ -52,7 +52,7 @@ The application uses the following GraphQL queries:
 
 ```
 graphql/
-├── login.html       # Login page
+├── index.html       # Login page
 ├── profile.html     # Profile dashboard
 ├── style.css        # All styling
 ├── app.js           # Shared utilities

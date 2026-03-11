@@ -1,5 +1,5 @@
 // Only redirect to dashboard if we're on the login page
-if (isAuthenticated() && window.location.pathname.endsWith('login.html')) {
+if (isAuthenticated() && window.location.pathname.endsWith('index.html')) {
     window.location.href = 'dashboard.html';
 }
 
@@ -110,7 +110,7 @@ function getToken(){
 
 function logout() {
     localStorage.removeItem('jwt');
-    window.location.href = 'login.html';
+    window.location.href = 'index.html';
 }
 
 function decodeJWT(token) {
