@@ -1,4 +1,4 @@
-p// Enhanced authentication check with back-button protection
+// Enhanced authentication check with back-button protection
 function checkAuthAndRedirect() {
     const token = localStorage.getItem('jwt');
     
