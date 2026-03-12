@@ -157,11 +157,11 @@ function displayProjectStats(projects) {
     const total = passed + failed;
     const successRate = total > 0 ? ((passed / total) * 100).toFixed(1) : 0;
     
-    console.log('✅ Passed (grade > 0):', passed);
-    console.log('❌ Failed (grade < 0):', failed);
-    console.log('⏳ In Progress (grade === null):', inProgress);
-    console.log('📊 Total graded:', total);
-    console.log('📈 Success rate:', successRate + '%');
+    console.log('Passed (grade > 0):', passed);
+    console.log('Failed (grade < 0):', failed);
+    console.log('In Progress (grade === null):', inProgress);
+    console.log('Total graded:', total);
+    console.log('Success rate:', successRate + '%');
     console.log('=========================');
 
     if (completedProjectsEl) completedProjectsEl.textContent = passed;
