@@ -1,4 +1,4 @@
-// Enhanced authentication check with back-button protection
+p// Enhanced authentication check with back-button protection
 function checkAuthAndRedirect() {
     const token = localStorage.getItem('jwt');
     
@@ -151,14 +151,14 @@ function displayProjectStats(projects) {
     console.log('Unique projects:', uniqueProjects.map(p => ({ path: p.path, grade: p.grade, name: p.object?.name })));
     
     const passed = uniqueProjects.filter(p => p.grade > 0).length;
-    const failed = uniqueProjects.filter(p => p.grade < 0).length;
+    const failed = uniqueProjects.filter(p => p.grade < 1).length;
     const inProgress = uniqueProjects.filter(p => p.grade == null).length;
     
     const total = passed + failed;
     const successRate = total > 0 ? ((passed / total) * 100).toFixed(1) : 0;
     
     console.log('Passed (grade > 0):', passed);
-    console.log('Failed (grade < 0):', failed);
+    console.log('Failed (grade < 1):', failed);
     console.log('In Progress (grade === null):', inProgress);
     console.log('Total graded:', total);
     console.log('Success rate:', successRate + '%');
