@@ -47,6 +47,7 @@ const auditRatioEl = document.getElementById('audit-ratio');
 // projects stats more
 const completedProjectsEl = document.getElementById('completed-projects');
 const failedProjectsEl = document.getElementById('failed-projects');
+const inProgressProjectsEl = document.getElementById('in-progress-projects');
 const successRateEl = document.getElementById('success-rate');
 const recentProjectsEl = document.getElementById('recent-projects');
 
@@ -150,21 +151,22 @@ function displayProjectStats(projects) {
     console.log('Unique projects:', uniqueProjects.map(p => ({ path: p.path, grade: p.grade, name: p.object?.name })));
     
     const passed = uniqueProjects.filter(p => p.grade > 0).length;
-    const failed = uniqueProjects.filter(p => p.grade === 0).length;
+    const failed = uniqueProjects.filter(p => p.grade < 0).length;
     const inProgress = uniqueProjects.filter(p => p.grade == null).length;
     
     const total = passed + failed;
     const successRate = total > 0 ? ((passed / total) * 100).toFixed(1) : 0;
     
-    console.log('Passed (grade > 0):', passed);
-    console.log('Failed (grade === 0):', failed);
-    console.log('In Progress (grade === null):', inProgress);
-    console.log('Total graded:', total);
-    console.log('Success rate:', successRate + '%');
+    console.log('✅ Passed (grade > 0):', passed);
+    console.log('❌ Failed (grade < 0):', failed);
+    console.log('⏳ In Progress (grade === null):', inProgress);
+    console.log('📊 Total graded:', total);
+    console.log('📈 Success rate:', successRate + '%');
     console.log('=========================');
 
     if (completedProjectsEl) completedProjectsEl.textContent = passed;
     if (failedProjectsEl) failedProjectsEl.textContent = failed;
+    if (inProgressProjectsEl) inProgressProjectsEl.textContent = inProgress;
     if (successRateEl) successRateEl.textContent = successRate + '%';
 }
 
@@ -176,17 +178,31 @@ function displayRecentProjects(projects) {
         return;
     }
 
-    recentProjectsEl.innerHTML = projects.map(project => `
-        <div class="project-item">
-            <div class="project-info">
-                <div class="project-name">${project.object.name}</div>
-                <div class="project-path">${project.path}</div>
+    recentProjectsEl.innerHTML = projects.map(project => {
+        let statusClass, statusText;
+        if (project.grade > 0) {
+            statusClass = 'passed';
+            statusText = 'Passed';
+        } else if (project.grade < 0) {
+            statusClass = 'failed';
+            statusText = 'Failed';
+        } else {
+            statusClass = 'in-progress';
+            statusText = 'In Progress';
+        }
+        
+        return `
+            <div class="project-item">
+                <div class="project-info">
+                    <div class="project-name">${project.object.name}</div>
+                    <div class="project-path">${project.path}</div>
+                </div>
+                <span class="project-status ${statusClass}">
+                    ${statusText}
+                </span>
             </div>
-            <span class="project-status ${project.grade > 0 ? 'passed' : 'failed'}">
-                ${project.grade > 0 ? 'Passed' : 'Failed'}
-            </span>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 function showLoading() {

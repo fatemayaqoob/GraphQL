@@ -455,7 +455,7 @@ function generateSuccessPieChart(projects) {
     console.log('After deduplication:', uniqueProjects.length, 'unique projects');
     
     const passed = uniqueProjects.filter(p => p.grade > 0).length;
-    const failed = uniqueProjects.filter(p => p.grade === 0).length;
+    const failed = uniqueProjects.filter(p => p.grade < 0).length;
     const total = passed + failed;
     
     console.log('Pie chart - Passed:', passed, 'Failed:', failed, 'Total graded:', total);

@@ -992,6 +992,12 @@ embed {
     border: 1px solid rgba(255, 205, 210, 0.3);
 }
 
+.project-status.in-progress {
+    background: rgba(255, 224, 130, 0.2);
+    color: #FFE082;
+    border: 1px solid rgba(255, 224, 130, 0.3);
+}
+
 /* ===== PROFILE CONTENT ===== */
 
 .profile-content {
