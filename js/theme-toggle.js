@@ -117,7 +117,6 @@
         lastScroll = currentScroll;
     });
 
-    // Initialize atmospheric particles (subtle effect)
     function createAtmosphericParticles() {
         const atmosphere = document.getElementById('atmosphere');
         if (!atmosphere) return;
@@ -141,7 +140,6 @@
         }
     }
 
-    // Add subtle float animation to particles
     const style = document.createElement('style');
     style.textContent = `
         @keyframes float {
@@ -153,7 +151,6 @@
     `;
     document.head.appendChild(style);
 
-    // Initialize everything when DOM is ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
             initTheme();

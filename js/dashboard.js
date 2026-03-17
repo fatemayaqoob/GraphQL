@@ -1,4 +1,4 @@
-// Enhanced authentication check with back-button protection
+// authentication with back-button protection
 function checkAuthAndRedirect() {
     const token = localStorage.getItem('jwt');
     
@@ -11,22 +11,20 @@ function checkAuthAndRedirect() {
     return true;
 }
 
-// Initial auth check
+// initial auth check
 if (!checkAuthAndRedirect()) {
     // Stop execution if not authenticated
     throw new Error('Not authenticated');
 }
 
-// Detect back-button navigation (pageshow fires when page is loaded from cache)
+// check back-button navigation
 window.addEventListener('pageshow', function(event) {
-    // If page is loaded from cache (back/forward button)
     if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
         console.log('Page loaded from cache, re-checking authentication...');
         checkAuthAndRedirect();
     }
 });
 
-// Re-check auth when page becomes visible (handles tab switching)
 document.addEventListener('visibilitychange', function() {
     if (!document.hidden) {
         checkAuthAndRedirect();
@@ -81,13 +79,18 @@ async function loadProfile(){
         // projects
         const projectsData = await getProjectsData(user.id);
         const projects = projectsData.progress;
-        displayProjectStats(projects);
+
+        // results (latest outcomes per project attempts)
+        const resultsData = await getResults(user.id);
+        const projectResults = (resultsData.result || []).filter(r => r.object?.type === 'project');
+
+        displayProjectStats(projects, projectResults);
         displayRecentProjects(projects.slice(0, 10));
 
         // make charts
         generateAuditBarChart(auditData.transaction);
         generateXPLineChart(xpData.transaction);
-        generateSuccessPieChart(projects);
+        generateSuccessPieChart(projects, projectResults);
 
         hideLoading();
     } catch (error) {
@@ -124,41 +127,81 @@ function calculateAuditRatio(audits) {
         .filter(t => t.type === 'down')
         .reduce((sum, t) => sum + t.amount, 0);
     
-    return auditDown > 0 ? (auditUp / auditDown).toFixed(2) : 'N/A';
+    return auditDown > 0 ? (auditUp / auditDown).toFixed(1) : 'N/A';
 }
 
 function displayAuditRatio(ratio) {
     if (auditRatioEl) auditRatioEl.textContent = ratio;
 }
 
-function displayProjectStats(projects) {
+function displayProjectStats(projects, projectResults = []) {
     console.log('=== PROJECT STATS DEBUG ===');
     console.log('Total entries from API:', projects.length);
-    console.log('All projects:', projects.map(p => ({ path: p.path, grade: p.grade, name: p.object?.name })));
+    console.log('All projects:', projects.map(p => ({ objectId: p.object?.id, grade: p.grade, name: p.object?.name })));
+
+    // Group attempts by project object ID to inspect repeated attempts (retakes).
+    const groupedByObjectId = projects.reduce((acc, project) => {
+        const key = project.object?.id ?? project.object?.name ?? project.id;
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(project);
+        return acc;
+    }, {});
+
+    const repeatedProjectGroups = Object.entries(groupedByObjectId)
+        .filter(([, attempts]) => attempts.length > 1)
+        .map(([key, attempts]) => ({
+            key,
+            attempts: attempts.length,
+            name: attempts[0]?.object?.name,
+            grades: attempts.map(a => a.grade),
+            latestGrade: attempts[0]?.grade,
+            hasFailAttempt: attempts.some(a => a.grade != null && a.grade <= 0),
+            hasPassAttempt: attempts.some(a => a.grade > 0)
+        }));
+
+    console.log('Repeated project IDs count:', repeatedProjectGroups.length);
+    if (repeatedProjectGroups.length > 0) {
+        console.table(repeatedProjectGroups);
+    }
     
     //ensure no duplicates
     const uniqueProjects = [];
     const seen = new Set();
+    const getProjectKey = (project) => project.object?.id ?? project.object?.name ?? project.id;
     
     projects.forEach(project => {
-        if (!seen.has(project.path)) {
-            seen.add(project.path);
+        const key = getProjectKey(project);
+        if (!seen.has(key)) {
+            seen.add(key);
             uniqueProjects.push(project);
         }
     });
     
     console.log('After deduplication: %d unique projects', uniqueProjects.length);
-    console.log('Unique projects:', uniqueProjects.map(p => ({ path: p.path, grade: p.grade, name: p.object?.name })));
+    console.log('Unique projects:', uniqueProjects.map(p => ({ objectId: p.object?.id, grade: p.grade, name: p.object?.name })));
     
-    const passed = uniqueProjects.filter(p => p.grade > 0).length;
-    const failed = uniqueProjects.filter(p => p.grade < 1).length;
-    const inProgress = uniqueProjects.filter(p => p.grade == null).length;
+    // History-aware stats:
+    // - Failed: project has ANY failed attempt (grade <= 0)
+    // - Passed: project has ANY passed attempt (grade > 0)
+    // Repeated IDs can contribute to both pass and fail if they have both outcomes.
+    // - In progress: latest attempt has null and no graded attempts yet
+    const projectHistories = Object.values(groupedByObjectId).map(attempts => {
+        const latest = attempts[0];
+        const hasFailAttempt = attempts.some(a => a.grade != null && a.grade <= 0);
+        const hasPassAttempt = attempts.some(a => a.grade > 0);
+        return { latest, hasFailAttempt, hasPassAttempt };
+    });
+
+    const failed = projectHistories.filter(h => h.hasFailAttempt).length;
+    const passed = projectHistories.filter(h => h.hasPassAttempt).length;
+    const inProgress = projectHistories.filter(h => h.latest?.grade == null && !h.hasPassAttempt && !h.hasFailAttempt).length;
     
     const total = passed + failed;
     const successRate = total > 0 ? ((passed / total) * 100).toFixed(1) : 0;
     
-    console.log('Passed (grade > 0):', passed);
-    console.log('Failed (grade < 1):', failed);
+    console.log('Outcome source:', 'history-aware progress attempts');
+    console.log('Passed (any passed attempt):', passed);
+    console.log('Failed (any failed attempt):', failed);
     console.log('In Progress (grade === null):', inProgress);
     console.log('Total graded:', total);
     console.log('Success rate:', successRate + '%');
@@ -183,7 +226,7 @@ function displayRecentProjects(projects) {
         if (project.grade > 0) {
             statusClass = 'passed';
             statusText = 'Passed';
-        } else if (project.grade < 0) {
+        } else if (project.grade != null && project.grade <= 0) {
             statusClass = 'failed';
             statusText = 'Failed';
         } else {
@@ -195,7 +238,7 @@ function displayRecentProjects(projects) {
             <div class="project-item">
                 <div class="project-info">
                     <div class="project-name">${project.object.name}</div>
-                    <div class="project-path">${project.path}</div>
+                    <div class="project-path">Object ID: ${project.object?.id ?? 'N/A'}</div>
                 </div>
                 <span class="project-status ${statusClass}">
                     ${statusText}

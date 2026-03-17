@@ -84,14 +84,19 @@ async function getAuditData(userId) {
         query($userId: Int!) {
             transaction(
                 where: {
-                    userId: { _eq: $userId }
                     type: { _in: ["up", "down"] }
+                    userId: { _eq: $userId }
                 }
                 order_by: { createdAt: asc }
             ) {
+                id
                 type
                 amount
                 createdAt
+                path
+                object {
+                    name
+                }
             }
         }
     `;
@@ -114,8 +119,8 @@ async function getProjectsData(userId) {
                 grade
                 createdAt
                 updatedAt
-                path
                 object {
+                    id
                     name
                     type
                 }
@@ -138,10 +143,11 @@ async function getResults(userId) {
             ) {
                 id
                 grade
+                type
                 createdAt
                 updatedAt
-                path
                 object {
+                    id
                     name
                     type
                 }

@@ -8,7 +8,6 @@ const loginBtn =document.getElementById('loginBtn');
 const usernameInput =document.getElementById('username');
 const passwordInput =document.getElementById('password');
 
-// Only set up login form if it exists (on login page)
 if (form) {
     let errorEl = document.getElementById('error');
     if (!errorEl) {
@@ -55,18 +54,18 @@ async function login(username, password) {
         throw new Error('Invalid credentials');
     }
 
-    // Get the JWT token - API returns it as plain text
+    // get the token as plain text
     let jwt = await res.text();
     
-    // Remove any whitespace/newlines/quotes
+    // remove any whitespace
     jwt = jwt.trim();
     
-    // Remove quotes if present (sometimes APIs wrap tokens in quotes)
+    // remove quotes if present
     if (jwt.startsWith('"') && jwt.endsWith('"')) {
         jwt = jwt.slice(1, -1);
     }
     
-    // Validate token format (should be 3 parts separated by dots)
+    // validate token format
     const parts = jwt.split('.');
     if (parts.length !== 3) {
         console.error('Invalid JWT format. Received:', jwt.substring(0, 50));

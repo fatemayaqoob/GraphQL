@@ -432,30 +432,50 @@ function generateXPLineChart(transactions) {
 }
 
 // Generate project success/fail pie chart
-function generateSuccessPieChart(projects) {
+function generateSuccessPieChart(projects, projectResults = []) {
     const svg = document.getElementById('success-chart');
     if (!svg) return;
     
     svg.innerHTML = '';
     
     console.log('=== PIE CHART DEBUG ===');
-    console.log('Total entries received:', projects.length);
+    console.log('Total progress entries received:', projects.length);
+    console.log('Total result entries received:', projectResults.length);
+
+    const outcomeSource = projectResults.length > 0 ? projectResults : projects;
     
     // DEDUPLICATION: Keep only the latest attempt for each unique project
     const uniqueProjects = [];
     const seen = new Set();
+    const getProjectKey = (project) => project.object?.id ?? project.object?.name ?? project.id;
     
-    projects.forEach(project => {
-        if (!seen.has(project.path)) {
-            seen.add(project.path);
+    outcomeSource.forEach(project => {
+        const key = getProjectKey(project);
+        if (!seen.has(key)) {
+            seen.add(key);
             uniqueProjects.push(project);
         }
     });
     
     console.log('After deduplication:', uniqueProjects.length, 'unique projects');
-    
-    const passed = uniqueProjects.filter(p => p.grade > 0).length;
-    const failed = uniqueProjects.filter(p => p.grade < 0).length;
+
+    // History-aware status for repeated attempts per project ID.
+    const groupedByProject = outcomeSource.reduce((acc, project) => {
+        const key = getProjectKey(project);
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(project);
+        return acc;
+    }, {});
+
+    const projectHistories = Object.values(groupedByProject).map(attempts => {
+        const latest = attempts[0];
+        const hasFailAttempt = attempts.some(a => a.grade != null && a.grade <= 0);
+        const hasPassAttempt = attempts.some(a => a.grade > 0);
+        return { latest, hasFailAttempt, hasPassAttempt };
+    });
+
+    const failed = projectHistories.filter(h => h.hasFailAttempt).length;
+    const passed = projectHistories.filter(h => h.hasPassAttempt).length;
     const total = passed + failed;
     
     console.log('Pie chart - Passed:', passed, 'Failed:', failed, 'Total graded:', total);
